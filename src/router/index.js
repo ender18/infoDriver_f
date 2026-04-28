@@ -21,7 +21,14 @@ const router = createRouter({
       redirect: '/dashboard'
     },
     
-    // Ruta 404 (opcional pero recomendada)
+    // 403
+    {
+      path: '/403',
+      name: 'forbidden',
+      component: () => import('@/views/Forbidden.vue')
+    },
+
+    // Ruta 404
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -30,20 +37,19 @@ const router = createRouter({
   ]
 })
 
-// Guard de navegación - protege las rutas
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const requiresAuth = to.meta.requiresAuth
 
-  if (requiresAuth && !authStore.isAuthenticated) {
-    // Si la ruta requiere auth y no está autenticado, va al login
-    next('/login')
-  } else if (to.path === '/login' && authStore.isAuthenticated) {
-    // Si está autenticado y quiere ir al login, lo manda al dashboard
-    next('/dashboard')
-  } else {
-    next()
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return next('/login')
   }
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    return next('/dashboard')
+  }
+  if (to.meta.requiredPermission && !authStore.hasPermission(to.meta.requiredPermission)) {
+    return next('/403')
+  }
+  next()
 })
 
 export default router

@@ -13,7 +13,7 @@
 
         <!-- Lista de módulos -->
         <v-list density="compact" nav>
-            <v-list-item v-for="module in modules" :key="module.name" :prepend-icon="module.icon" :title="module.title"
+            <v-list-item v-for="module in visibleModules" :key="module.name" :prepend-icon="module.icon" :title="module.title"
                 :value="module.name" :to="module.route" color="primary" />
         </v-list>
 
@@ -22,7 +22,7 @@
 
             <!-- Usuario y Logout -->
             <v-list density="compact" nav>
-                <v-list-item prepend-icon="mdi-account" :title="rail ? '' : userEmail" />
+                <v-list-item prepend-icon="mdi-account" :title="rail ? '' : authStore.user?.email || ''" />
 
                 <v-list-item prepend-icon="mdi-logout" :title="rail ? '' : 'Cerrar Sesión'" @click="handleLogout"
                     color="error" />
@@ -39,46 +39,18 @@ const authStore = useAuthStore()
 const drawer = ref(true)
 const rail = ref(false)
 
-// Email del usuario (puedes obtenerlo del token o del store)
-const userEmail = computed(() => {
-    // Por ahora mostramos un placeholder
-    // Luego lo obtendremos del backend
-    return 'admin@infodriver.com'
-})
+const allModules = [
+    { name: 'dashboard',   title: 'Dashboard',      icon: 'mdi-view-dashboard',   route: '/dashboard',        permission: null },
+    { name: 'users',       title: 'Usuarios',        icon: 'mdi-account-multiple', route: '/users',            permission: 'users:read' },
+    { name: 'roles',       title: 'Roles',           icon: 'mdi-shield-account',   route: '/roles',            permission: 'roles:read' },
+    { name: 'permissions', title: 'Permisos',        icon: 'mdi-lock',             route: '/permissions',      permission: 'permissions:read' },
+    { name: 'tools',       title: 'Herramientas',    icon: 'mdi-wrench',           route: '/tools',            permission: 'tools:run' },
+    { name: 'settings',    title: 'Configuración',   icon: 'mdi-cog',              route: '/settings',         permission: null },
+]
 
-// Módulos del sistema
-const modules = ref([
-    {
-        name: 'dashboard',
-        title: 'Dashboard',
-        icon: 'mdi-view-dashboard',
-        route: '/dashboard'
-    },
-    {
-        name: 'users',
-        title: 'Usuarios',
-        icon: 'mdi-account-multiple',
-        route: '/users'
-    },
-    {
-        name: 'roles',
-        title: 'Roles',
-        icon: 'mdi-shield-account',
-        route: '/roles'
-    },
-    {
-        name: 'permissions',
-        title: 'Permisos',
-        icon: 'mdi-lock',
-        route: '/permissions'
-    },
-    {
-        name: 'settings',
-        title: 'Configuración',
-        icon: 'mdi-cog',
-        route: '/settings'
-    }
-])
+const visibleModules = computed(() =>
+    allModules.filter(m => !m.permission || authStore.hasPermission(m.permission))
+)
 
 const handleLogout = () => {
     authStore.logout()

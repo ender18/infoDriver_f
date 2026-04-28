@@ -6,12 +6,12 @@
       </v-btn>
     </div>
 
-    <div class="text-h5 font-weight-bold mb-2">Configuración</div>
+    <div class="text-h5 font-weight-bold mb-2">Herramientas</div>
     <v-divider class="mb-6" color="primary" :thickness="2" style="max-width: 60px;" />
 
     <v-row>
-      <v-col v-for="sub in visibleSubmodules" :key="sub.name" cols="12" md="4" lg="3">
-        <v-card elevation="1" @click="$router.push(sub.route)" style="cursor: pointer;">
+      <v-col v-for="sub in submodules" :key="sub.name" cols="12" md="4" lg="3" class="d-flex">
+        <v-card elevation="1" height="100%" @click="$router.push(sub.route)" style="cursor: pointer; width: 100%;">
           <v-card-text class="text-center pa-6">
             <v-icon :icon="sub.icon" size="56" :color="sub.color" class="mb-3" />
             <div class="text-subtitle-1 font-weight-bold mb-1">{{ sub.title }}</div>
@@ -24,25 +24,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import MainLayout from '@/components/layout/MainLayout.vue'
-import { useAuthStore } from '@/stores/auth'
-
-const auth = useAuthStore()
 
 const submodules = [
   {
-    name: 'companies',
-    title: 'Compañías',
-    description: 'Gestiona las compañías y sus credenciales de API',
-    icon: 'mdi-office-building',
+    name: 'drivers-validation',
+    title: 'Validación de Conductores',
+    description: 'Detecta errores en los datos de conductores por compañía',
+    icon: 'mdi-account-check',
     color: 'primary',
-    route: '/companies',
-    permission: 'companies:read',
+    route: '/tools/drivers-validation',
   },
 ]
-
-const visibleSubmodules = computed(() =>
-  submodules.filter(s => !s.permission || auth.hasPermission(s.permission))
-)
 </script>

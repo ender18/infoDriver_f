@@ -1,5 +1,6 @@
 // src/services/api.js
 import axios from 'axios'
+import { useNotificationStore } from '@/stores/notification'
 
 // URL base de tu backend FastAPI
 const API_URL = 'http://127.0.0.1:8000/api'
@@ -22,6 +23,19 @@ apiClient.interceptors.request.use(
     return config
   },
   (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Interceptor de respuesta — captura 401 y 403
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status
+    if (status === 403) {
+      const notify = useNotificationStore()
+      notify.notify('No tienes permiso para realizar esta acción')
+    }
     return Promise.reject(error)
   }
 )

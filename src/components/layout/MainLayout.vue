@@ -39,14 +39,21 @@
                 <slot />
             </v-container>
         </v-main>
+
+        <!-- Snackbar global para errores de permisos -->
+        <v-snackbar v-model="notification.show" :color="notification.color" location="bottom right" timeout="4000">
+            {{ notification.text }}
+        </v-snackbar>
     </v-app>
 </template>
 
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notification'
 
 const authStore = useAuthStore()
+const notification = useNotificationStore()
 
 // Obtener información del usuario al montar el componente si no existe
 onMounted(() => {

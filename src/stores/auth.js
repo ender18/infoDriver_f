@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Computed
   const isAuthenticated = computed(() => !!token.value)
+  const hasPermission = computed(() => (name) => user.value?.permissions?.includes(name) ?? false)
 
 
   const fetchUser = async () => {
@@ -71,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     // Computed
     isAuthenticated,
+    hasPermission,
     // Acciones
     login,
     logout,

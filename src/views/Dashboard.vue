@@ -7,8 +7,8 @@
         <v-divider class="mb-6" color="primary" :thickness="2" style="max-width: 80px;" />
 
         <v-row>
-            <v-col v-for="module in filteredModules" :key="module.id" cols="12" md="6" lg="2">
-                <v-card elevation="1" @click="$router.push(module.route)" style="cursor: pointer;">
+            <v-col v-for="module in filteredModules" :key="module.id" cols="12" md="6" lg="2" class="d-flex">
+                <v-card elevation="1" height="100%" @click="$router.push(module.route)" style="cursor: pointer; width: 100%;">
                     <v-card-text class="text-center pa-6">
                         <v-icon :icon="module.icon" size="60" color="primary" class="mb-3" />
                         <div class="text-subtitle-1 font-weight-bold mb-1">
@@ -38,7 +38,23 @@ const modules = ref([
         description: 'Gestiona usuarios, roles y permisos del sistema',
         icon: 'mdi-shield-account',
         route: '/administration',
-        submodulePermissions: ['users:viewer', 'users:create', 'users:update', 'users:delete', 'roles:read', 'roles:create', 'roles:update', 'roles:delete']
+        submodulePermissions: ['users:read', 'users:create', 'users:update', 'users:delete', 'roles:read', 'roles:create', 'roles:update', 'roles:delete']
+    },
+    {
+        id: 2,
+        title: 'Herramientas',
+        description: 'Validación y análisis de datos de conductores',
+        icon: 'mdi-wrench',
+        route: '/tools',
+        submodulePermissions: ['tools:run']
+    },
+    {
+        id: 3,
+        title: 'Configuración',
+        description: 'Gestiona compañías y parámetros del sistema',
+        icon: 'mdi-cog',
+        route: '/settings',
+        submodulePermissions: ['companies:read', 'companies:create', 'companies:update', 'companies:delete']
     }
 ])
 
