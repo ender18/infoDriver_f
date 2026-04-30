@@ -52,6 +52,12 @@ export default [
     meta: { requiresAuth: true, title: 'Validación de Conductores', requiredPermission: 'tools:run' }
   },
   {
+    path: '/tools/drivers-accounts',
+    name: 'drivers-accounts',
+    component: () => import('@/views/modules/DriversAccounts.vue'),
+    meta: { requiresAuth: true, title: 'Saldos de Conductores', requiredPermission: 'tools:run' }
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/modules/Settings.vue'),

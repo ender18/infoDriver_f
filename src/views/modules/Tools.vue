@@ -35,5 +35,13 @@ const submodules = [
     color: 'primary',
     route: '/tools/drivers-validation',
   },
+  {
+    name: 'drivers-accounts',
+    title: 'Saldos de Conductores',
+    description: 'Consulta conductores con saldo positivo pendiente por compañía',
+    icon: 'mdi-currency-usd',
+    color: 'error',
+    route: '/tools/drivers-accounts',
+  },
 ]
 </script>
