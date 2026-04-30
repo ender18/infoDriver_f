@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import apiClient from '@/services/api'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
+// Derivar la base URL de apiClient para no duplicar la configuración
+const API_BASE = apiClient.defaults.baseURL
 
 export const useToolsStore = defineStore('tools', () => {
   const accountsLoading         = ref(false)
