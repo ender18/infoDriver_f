@@ -446,15 +446,23 @@ const handleError = (err) => {
 const exportCsv = () => {
   const rows = filteredAccounts.value
   if (!rows.length) return
-  const cols = ['callsign', 'driver_id', 'forename', 'surname',
+  const cols = ['callsign', 'driver_id', 'fullName',
                  'bank_name', 'bank_sort_code', 'account_type', 'current_balance',
                  'all_jobs_total', 'all_jobs_commission',
-                 'notes', 'process_status', 'process_result', 'process_balance_before', 'processed_at']
+                 'notes', 'process_status', 'process_balance_before', 'processed_at']
   const csv = [
     cols.join(','),
     ...rows.map(r => {
-      const extra = { ...r, account_type: accountType(r.bank_sort_code) }
-      return cols.map(c => `"${String(extra[c] ?? '').replace(/"/g, '""')}"`).join(',')
+      const extra = {
+        ...r,
+        account_type: accountType(r.bank_sort_code),
+        fullName: `${r.forename} ${r.surname}`.toUpperCase(),
+      }
+      return cols.map(c => {
+        const val = String(extra[c] ?? '').replace(/"/g, '""')
+        if (c === 'bank_sort_code') return `"'${val}"`
+        return `"${val}"`
+      }).join(',')
     })
   ].join('\n')
   const a = document.createElement('a')

@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('user', JSON.stringify(userData))
     } catch (err) {
       console.error('Error al obtener usuario:', err)
-      logout()
+      if (err.response?.status !== 401) logout()
     }
   }
 

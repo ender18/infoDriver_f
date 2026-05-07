@@ -35,7 +35,7 @@ apiClient.interceptors.response.use(
     if (status === 401) {
       const auth = useAuthStore()
       auth.logout()
-      router.push('/login')
+      router.push('/login?reason=expired')
     } else if (status === 403) {
       const notify = useNotificationStore()
       notify.notify('No tienes permiso para realizar esta acción')

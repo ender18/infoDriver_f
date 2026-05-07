@@ -18,6 +18,10 @@
           @click:append-inner="showPassword = !showPassword" variant="outlined" :rules="[rules.required]"
           hide-details="auto" class="mb-6" />
 
+        <v-alert v-if="route.query.reason === 'expired'" type="warning" variant="tonal" density="compact" class="mb-6">
+          Tu sesión ha expirado. Por favor inicia sesión de nuevo.
+        </v-alert>
+
         <v-alert v-if="authStore.error" type="error" variant="tonal" density="compact" class="mb-6">
           {{ authStore.error }}
         </v-alert>
@@ -26,15 +30,23 @@
           Iniciar Sesión
         </v-btn>
       </v-form>
+
+      <div class="text-center mt-8 text-caption text-disabled">
+        v{{ appVersion }}
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const route = useRoute()
+
+const appVersion = __APP_VERSION__
 const formRef = ref(null)
 
 const credentials = ref({
