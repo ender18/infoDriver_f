@@ -58,6 +58,12 @@ export default [
     meta: { requiresAuth: true, title: 'Saldos de Conductores', requiredPermission: 'tools:run' }
   },
   {
+    path: '/tools/stats',
+    name: 'stats',
+    component: () => import('@/views/stats/StatsView.vue'),
+    meta: { requiresAuth: true, title: 'Estadísticas de Reservas', requiredPermission: 'stats:read' }
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/modules/Settings.vue'),

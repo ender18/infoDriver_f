@@ -43,5 +43,13 @@ const submodules = [
     color: 'error',
     route: '/tools/drivers-accounts',
   },
+  {
+    name: 'stats',
+    title: 'Estadísticas de Reservas',
+    description: 'Resumen de reservas completadas y canceladas con desglose por día',
+    icon: 'mdi-chart-bar',
+    color: 'success',
+    route: '/tools/stats',
+  },
 ]
 </script>
