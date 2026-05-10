@@ -51,5 +51,13 @@ const submodules = [
     color: 'success',
     route: '/tools/stats',
   },
+  {
+    name: 'stats-drivers',
+    title: 'Stats Conductores',
+    description: 'Rendimiento de conductores en los últimos 15 días e histórico total',
+    icon: 'mdi-account-group',
+    color: 'secondary',
+    route: '/tools/stats-drivers',
+  },
 ]
 </script>

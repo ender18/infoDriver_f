@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
-import { getBookingsSummary } from '@/api/stats'
+import { getBookingsSummary, getDriversSummary } from '@/api/stats'
 
 export const useStatsStore = defineStore('stats', {
   state: () => ({
-    isLoading: false,
-    result:    null,   // { date_from, date_to, summary, by_day[] }
-    error:     null,
+    isLoading:        false,
+    result:           null,
+    error:            null,
+    isLoadingDrivers: false,
+    driversResult:    null,
   }),
   actions: {
     async fetchBookingsSummary(dateFrom, dateTo) {
@@ -25,6 +27,21 @@ export const useStatsStore = defineStore('stats', {
       this.isLoading = false
       this.result    = null
       this.error     = null
+    },
+    async fetchDriversSummary(companyId) {
+      this.isLoadingDrivers = true
+      this.driversResult    = null
+      try {
+        const { data } = await getDriversSummary(companyId)
+        this.driversResult = data
+      } catch (err) {
+        throw err
+      } finally {
+        this.isLoadingDrivers = false
+      }
+    },
+    clearDrivers() {
+      this.driversResult = null
     },
   },
 })

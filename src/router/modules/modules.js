@@ -64,6 +64,12 @@ export default [
     meta: { requiresAuth: true, title: 'Estadísticas de Reservas', requiredPermission: 'stats:read' }
   },
   {
+    path: '/tools/stats-drivers',
+    name: 'stats-drivers',
+    component: () => import('@/views/stats/StatsDriversView.vue'),
+    meta: { requiresAuth: true, title: 'Stats Conductores', requiredPermission: 'stats:read' }
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/modules/Settings.vue'),
