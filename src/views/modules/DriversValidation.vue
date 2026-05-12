@@ -152,6 +152,10 @@
               <span class="text-body-2 text-error">{{ item.error }}</span>
             </template>
 
+            <template #item.postcode="{ item }">
+              <span class="text-body-2 text-medium-emphasis">{{ item.postcode }}</span>
+            </template>
+
             <template #no-data>
               <div class="text-center py-8 text-medium-emphasis">
                 <v-icon size="36" class="mb-2">mdi-filter-off</v-icon>
@@ -189,6 +193,7 @@ const headers = [
   { title: 'Campo',     key: 'field' },
   { title: 'Valor',     key: 'value',   sortable: false },
   { title: 'Error',     key: 'error',   sortable: false },
+  { title: 'Referidor', key: 'postcode', sortable: false },
 ]
 
 const activeCompanies = computed(() => companies.value.filter(c => c.is_active))
