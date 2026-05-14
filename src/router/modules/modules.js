@@ -58,6 +58,12 @@ export default [
     meta: { requiresAuth: true, title: 'Saldos de Conductores', requiredPermission: 'tools:run' }
   },
   {
+    path: '/tools/drivers-accounts/history',
+    name: 'drivers-accounts-history',
+    component: () => import('@/views/modules/DriversAccountsHistory.vue'),
+    meta: { requiresAuth: true, title: 'Histórico de Saldos', requiredPermission: 'tools:run' }
+  },
+  {
     path: '/tools/stats',
     name: 'stats',
     component: () => import('@/views/stats/StatsView.vue'),

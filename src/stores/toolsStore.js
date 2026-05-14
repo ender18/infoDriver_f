@@ -183,6 +183,75 @@ export const useToolsStore = defineStore('tools', () => {
     accountsError.value           = null
   }
 
+  // ── Histórico ─────────────────────────────────────────────────────────────
+
+  const historyLoading  = ref(false)
+  const historySessions = ref([])
+  const historyDetail   = ref(null)
+  const historyError    = ref(null)
+
+  const logLoading = ref(false)
+  const logEntries = ref([])
+  const logError   = ref(null)
+
+  async function loadHistorySessions(companyId) {
+    historyLoading.value  = true
+    historyError.value    = null
+    historySessions.value = []
+    historyDetail.value   = null
+    try {
+      const { data } = await apiClient.get('/tools/drivers/accounts/history', {
+        params: { company_id: companyId }
+      })
+      historySessions.value = data.sessions
+    } catch (err) {
+      historyError.value = { code: err.response?.status }
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
+  async function loadHistoryDetail(companyId, sessionId) {
+    historyLoading.value = true
+    historyError.value   = null
+    historyDetail.value  = null
+    try {
+      const { data } = await apiClient.get(
+        `/tools/drivers/accounts/history/${sessionId}`,
+        { params: { company_id: companyId } }
+      )
+      historyDetail.value = data
+    } catch (err) {
+      historyError.value = { code: err.response?.status }
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
+  async function loadPaymentLog(companyId) {
+    logLoading.value = true
+    logError.value   = null
+    try {
+      const { data } = await apiClient.get('/tools/drivers/accounts/log', {
+        params: { company_id: companyId, limit: 100 }
+      })
+      logEntries.value = data
+    } catch (err) {
+      logError.value = { code: err.response?.status }
+    } finally {
+      logLoading.value = false
+    }
+  }
+
+  function clearHistory() {
+    historyLoading.value  = false
+    historySessions.value = []
+    historyDetail.value   = null
+    historyError.value    = null
+    logEntries.value      = []
+    logError.value        = null
+  }
+
   return {
     accountsLoading,
     accountsRefreshing,
@@ -196,5 +265,16 @@ export const useToolsStore = defineStore('tools', () => {
     processSingleDriver,
     processBulk,
     clearAccounts,
+    historyLoading,
+    historySessions,
+    historyDetail,
+    historyError,
+    logLoading,
+    logEntries,
+    logError,
+    loadHistorySessions,
+    loadHistoryDetail,
+    loadPaymentLog,
+    clearHistory,
   }
 })

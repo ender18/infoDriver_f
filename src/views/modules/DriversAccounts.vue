@@ -217,6 +217,13 @@
               {{ item.process_balance_before != null ? formatMoney(item.process_balance_before) : '—' }}
             </template>
 
+            <!-- Estado pago -->
+            <template #item.payment_status="{ item }">
+              <v-chip :color="paymentStatusColor(item.payment_status)" size="x-small" variant="tonal">
+                {{ paymentStatusLabel(item.payment_status) }}
+              </v-chip>
+            </template>
+
             <!-- Estado proceso -->
             <template #item.process_status="{ item }">
               <v-tooltip
@@ -323,6 +330,7 @@ const headers = [
   { title: 'Total viajes',     key: 'all_jobs_total',       align: 'end', sortable: true },
   { title: 'Comisión',         key: 'all_jobs_commission',  align: 'end', sortable: true },
   { title: 'Estado',           key: 'process_status',       align: 'center' },
+  { title: 'Pago',            key: 'payment_status',       align: 'center', sortable: false },
   { title: 'Saldo verificado', key: 'process_balance_before', align: 'end', sortable: true },
   { title: 'Procesado',        key: 'processed_at',         sortable: true },
   { title: '',                 key: 'actions',              sortable: false, width: '110px' },
@@ -386,6 +394,11 @@ const balanceClass = (val) => {
 }
 const statusColor = (s) => ({ done: 'success', error: 'error', processing: 'primary' }[s] ?? 'secondary')
 const statusLabel = (s) => ({ done: 'Procesado', error: 'Error', processing: 'Procesando…' }[s] ?? 'Pendiente')
+
+const paymentStatusColor = (s) =>
+  ({ success: 'success', pending: 'warning', error: 'error' }[s] ?? 'secondary')
+const paymentStatusLabel = (s) =>
+  ({ success: 'Pagado', pending: 'Pendiente pago', error: 'Error pago' }[s] ?? '—')
 
 // ── Acciones ─────────────────────────────────────────────────────────────
 

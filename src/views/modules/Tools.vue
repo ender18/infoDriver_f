@@ -44,6 +44,14 @@ const submodules = [
     route: '/tools/drivers-accounts',
   },
   {
+    name: 'drivers-accounts-history',
+    title: 'Histórico de Saldos',
+    description: 'Consulta sesiones anteriores de saldos y su estado de pago',
+    icon: 'mdi-history',
+    color: 'warning',
+    route: '/tools/drivers-accounts/history',
+  },
+  {
     name: 'stats',
     title: 'Estadísticas de Reservas',
     description: 'Resumen de reservas completadas y canceladas con desglose por día',
