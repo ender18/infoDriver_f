@@ -40,6 +40,15 @@ const submodules = [
     route: '/companies',
     permission: 'companies:read',
   },
+  {
+    name: 'banks',
+    title: 'Bancos',
+    description: 'Catálogo de bancos SPEI de México',
+    icon: 'mdi-bank',
+    color: 'success',
+    route: '/banks',
+    permission: null,
+  },
 ]
 
 const visibleSubmodules = computed(() =>

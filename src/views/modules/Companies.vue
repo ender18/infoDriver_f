@@ -65,6 +65,20 @@
           <span class="text-body-2">{{ item.phone || '—' }}</span>
         </template>
 
+        <!-- Peibo -->
+        <template #item.peibo_status="{ item }">
+          <v-tooltip
+            :text="peiboConfigured(item) ? 'Peibo configurado' : 'Sin configuración Peibo'"
+            location="top"
+          >
+            <template #activator="{ props }">
+              <v-icon v-bind="props" :color="peiboConfigured(item) ? 'success' : 'secondary'" size="18">
+                {{ peiboConfigured(item) ? 'mdi-bank-check' : 'mdi-bank-off' }}
+              </v-icon>
+            </template>
+          </v-tooltip>
+        </template>
+
         <!-- Estado -->
         <template #item.is_active="{ item }">
           <v-icon :color="item.is_active ? 'success' : 'error'" size="18">
@@ -101,7 +115,7 @@
     </v-card>
 
     <!-- Dialog crear / editar -->
-    <v-dialog v-model="formDialog" max-width="560" persistent>
+    <v-dialog v-model="formDialog" max-width="640" persistent>
       <v-card>
         <v-card-title class="text-body-1 font-weight-bold pt-5 px-5">
           {{ editTarget ? 'Editar compañía' : 'Nueva compañía' }}
@@ -169,16 +183,53 @@
                 <v-text-field
                   v-model="form.api_subscription_key"
                   label="Subscription Key *"
-                  :type="showKey ? 'text' : 'password'"
                   variant="outlined"
                   density="compact"
-                  :append-inner-icon="showKey ? 'mdi-eye-off' : 'mdi-eye'"
-                  @click:append-inner="showKey = !showKey"
                   :rules="editTarget ? [] : [v => !!v || 'Requerido']"
+                />
+              </v-col>
+              <!-- Separador Peibo -->
+              <v-col cols="12">
+                <v-divider class="my-1" />
+                <div class="text-caption text-medium-emphasis mt-2 mb-1 font-weight-medium">
+                  Configuración Peibo (pagos)
+                </div>
+              </v-col>
+
+              <!-- Customer Key -->
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.peibo_customer_key"
+                  label="X-CUSTOMER-KEY"
+                  variant="outlined"
+                  density="compact"
                   :hint="editTarget ? 'Dejar vacío para no modificar' : ''"
                   persistent-hint
                 />
               </v-col>
+
+              <!-- API Key -->
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.peibo_api_key"
+                  label="API Key"
+                  variant="outlined"
+                  density="compact"
+                />
+              </v-col>
+
+              <!-- Cuenta originaria -->
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.peibo_originator_account"
+                  label="Cuenta originaria (CLABE)"
+                  variant="outlined"
+                  density="compact"
+                  hint="Cuenta desde la que salen los pagos"
+                  persistent-hint
+                />
+              </v-col>
+
               <v-col v-if="editTarget" cols="12">
                 <v-switch
                   v-model="form.is_active"
@@ -234,7 +285,6 @@ const companies = ref([])
 const loading = ref(false)
 const search = ref('')
 const nameError = ref('')
-const showKey = ref(false)
 
 const formDialog = ref(false)
 const formRef = ref(null)
@@ -243,6 +293,7 @@ const saving = ref(false)
 const emptyForm = () => ({
   name: '', address: '', country: '', email: '', phone: '',
   api_base_url: '', api_subscription_key: '', is_active: true,
+  peibo_customer_key: '', peibo_api_key: '', peibo_originator_account: '',
 })
 const form = ref(emptyForm())
 
@@ -257,10 +308,14 @@ const headers = [
   { title: 'País', key: 'country' },
   { title: 'Email', key: 'email' },
   { title: 'Teléfono', key: 'phone' },
+  { title: 'Peibo', key: 'peibo_status', align: 'center', sortable: false },
   { title: 'Activo', key: 'is_active', align: 'center' },
   { title: 'Creado', key: 'created_at' },
   { title: '', key: 'actions', sortable: false, align: 'end' },
 ]
+
+const peiboConfigured = (c) =>
+  !!(c.peibo_customer_key && c.peibo_api_key && c.peibo_originator_account)
 
 const filteredCompanies = computed(() => {
   if (!search.value) return companies.value
@@ -289,31 +344,32 @@ const loadCompanies = async () => {
 const openCreate = () => {
   editTarget.value = null
   form.value = emptyForm()
-  nameError.value = ''
-  showKey.value = false
+  nameError.value  = ''
   formDialog.value = true
 }
 
 const openEdit = (company) => {
   editTarget.value = company
   form.value = {
-    name: company.name,
-    address: company.address ?? '',
-    country: company.country ?? '',
-    email: company.email ?? '',
-    phone: company.phone ?? '',
-    api_base_url: company.api_base_url,
-    api_subscription_key: '',
-    is_active: company.is_active,
+    name:                     company.name,
+    address:                  company.address              ?? '',
+    country:                  company.country              ?? '',
+    email:                    company.email                ?? '',
+    phone:                    company.phone                ?? '',
+    api_base_url:             company.api_base_url,
+    api_subscription_key:     company.api_subscription_key ?? '',
+    is_active:                company.is_active,
+    peibo_customer_key:       company.peibo_customer_key       ?? '',
+    peibo_api_key:            company.peibo_api_key            ?? '',
+    peibo_originator_account: company.peibo_originator_account ?? '',
   }
-  nameError.value = ''
-  showKey.value = false
+  nameError.value  = ''
   formDialog.value = true
 }
 
 const closeForm = () => {
   formDialog.value = false
-  formRef.value?.reset()
+  formRef.value?.resetValidation()
 }
 
 const submitForm = async () => {
@@ -334,19 +390,29 @@ const submitForm = async () => {
       if (form.value.api_subscription_key) payload.api_subscription_key = form.value.api_subscription_key
       if (form.value.is_active !== original.is_active) payload.is_active = form.value.is_active
 
+      if (form.value.peibo_customer_key !== (original.peibo_customer_key ?? ''))
+        payload.peibo_customer_key = form.value.peibo_customer_key || null
+      if (form.value.peibo_api_key !== (original.peibo_api_key ?? ''))
+        payload.peibo_api_key = form.value.peibo_api_key || null
+      if (form.value.peibo_originator_account !== (original.peibo_originator_account ?? ''))
+        payload.peibo_originator_account = form.value.peibo_originator_account || null
+
       const { data } = await apiClient.patch(`/companies/${original.id}`, payload)
       const idx = companies.value.findIndex(c => c.id === original.id)
       if (idx !== -1) companies.value[idx] = { ...companies.value[idx], ...data }
       showSnack('Compañía actualizada')
     } else {
       const { data } = await apiClient.post('/companies/', {
-        name: form.value.name,
-        address: form.value.address || null,
-        country: form.value.country || null,
-        email: form.value.email || null,
-        phone: form.value.phone || null,
-        api_base_url: form.value.api_base_url,
-        api_subscription_key: form.value.api_subscription_key,
+        name:                     form.value.name,
+        address:                  form.value.address || null,
+        country:                  form.value.country || null,
+        email:                    form.value.email   || null,
+        phone:                    form.value.phone   || null,
+        api_base_url:             form.value.api_base_url,
+        api_subscription_key:     form.value.api_subscription_key,
+        peibo_customer_key:       form.value.peibo_customer_key       || null,
+        peibo_api_key:            form.value.peibo_api_key            || null,
+        peibo_originator_account: form.value.peibo_originator_account || null,
       })
       companies.value.unshift(data)
       showSnack('Compañía creada')

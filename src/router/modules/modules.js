@@ -86,5 +86,17 @@ export default [
     name: 'companies',
     component: () => import('@/views/modules/Companies.vue'),
     meta: { requiresAuth: true, title: 'Compañías', requiredPermission: 'companies:read' }
+  },
+  {
+    path: '/banks',
+    name: 'banks',
+    component: () => import('@/views/modules/Banks.vue'),
+    meta: { requiresAuth: true, title: 'Catálogo de Bancos' }
+  },
+  {
+    path: '/payments/test',
+    name: 'payment-test',
+    component: () => import('@/views/modules/PaymentTest.vue'),
+    meta: { requiresAuth: true, title: 'Prueba de Transferencia', requiredPermission: 'companies:update' }
   }
 ]

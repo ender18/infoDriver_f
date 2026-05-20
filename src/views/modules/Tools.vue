@@ -52,6 +52,14 @@ const submodules = [
     route: '/tools/drivers-accounts/history',
   },
   {
+    name: 'payment-test',
+    title: 'Prueba de Pago',
+    description: 'Enviar una transferencia SPEI individual vía Peibo',
+    icon: 'mdi-bank-transfer-out',
+    color: 'deep-purple',
+    route: '/payments/test',
+  },
+  {
     name: 'stats',
     title: 'Estadísticas de Reservas',
     description: 'Resumen de reservas completadas y canceladas con desglose por día',

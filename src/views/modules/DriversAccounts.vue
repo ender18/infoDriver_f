@@ -247,18 +247,37 @@
               {{ item.processed_at ? formatDate(item.processed_at) : '—' }}
             </template>
 
-            <!-- Botón proceso individual -->
+            <!-- Botones por fila -->
             <template #item.actions="{ item }">
-              <v-btn
-                size="x-small"
-                variant="tonal"
-                color="warning"
-                :loading="item.process_status === 'processing'"
-                :disabled="tools.accountsRefreshing || item.process_status === 'processing'"
-                @click="processSingle(item)"
-              >
-                Procesar
-              </v-btn>
+              <div class="d-flex gap-1">
+                <v-btn
+                  size="x-small"
+                  variant="tonal"
+                  color="warning"
+                  :loading="item.process_status === 'processing'"
+                  :disabled="tools.accountsRefreshing || item.process_status === 'processing'"
+                  @click="processSingle(item)"
+                >
+                  Procesar
+                </v-btn>
+                <v-btn
+                  v-if="auth.hasPermission('companies:update')"
+                  size="x-small"
+                  variant="tonal"
+                  color="deep-purple"
+                  :loading="payingDrivers[item.driver_id]"
+                  :disabled="
+                    tools.accountsRefreshing ||
+                    payingDrivers[item.driver_id] ||
+                    item.payment_status === 'success' ||
+                    !item.process_balance_before ||
+                    item.process_balance_before <= 0
+                  "
+                  @click="paySingle(item)"
+                >
+                  {{ item.payment_status === 'success' ? 'Pagado' : 'Pagar' }}
+                </v-btn>
+              </div>
             </template>
 
             <template #no-data>
@@ -319,6 +338,7 @@ const selectedCompanyId = ref(null)
 const search            = ref('')
 const confirmDialog     = ref(false)
 const snack             = ref({ show: false, text: '', color: 'error' })
+const payingDrivers     = ref({})
 
 const headers = [
   { title: 'Callsign',         key: 'callsign',             sortable: true },
@@ -333,7 +353,7 @@ const headers = [
   { title: 'Pago',            key: 'payment_status',       align: 'center', sortable: false },
   { title: 'Saldo verificado', key: 'process_balance_before', align: 'end', sortable: true },
   { title: 'Procesado',        key: 'processed_at',         sortable: true },
-  { title: '',                 key: 'actions',              sortable: false, width: '110px' },
+  { title: '',                 key: 'actions',              sortable: false, width: '160px' },
 ]
 
 const activeCompanies = computed(() => companies.value.filter(c => c.is_active))
@@ -443,6 +463,28 @@ const processSingle = async (item) => {
   } catch (err) {
     const detail = err.response?.data?.detail
     showSnack(typeof detail === 'string' ? detail : 'Error al procesar el conductor')
+  }
+}
+
+const paySingle = async (item) => {
+  payingDrivers.value[item.driver_id] = true
+  try {
+    const { data } = await apiClient.post(
+      `/payments/transfer/driver/${item.driver_id}`,
+      null,
+      { params: { company_id: selectedCompanyId.value } },
+    )
+    const row = tools.accountsResult.results.find(r => r.driver_id === item.driver_id)
+    if (row) {
+      row.payment_status      = 'pending'
+      row.peibo_tracking_code = data.tracking_code
+    }
+    showSnack(`Pago enviado · ${data.tracking_code}`, 'success')
+  } catch (err) {
+    const detail = err.response?.data?.detail
+    showSnack(typeof detail === 'string' ? detail : 'Error al enviar el pago', 'error')
+  } finally {
+    delete payingDrivers.value[item.driver_id]
   }
 }
 
