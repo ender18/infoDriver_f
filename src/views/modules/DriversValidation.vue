@@ -207,6 +207,8 @@ const fieldColorMap = {
   mobile:        'success',
   telephone:     'success',
   'city/region': 'secondary',
+  bankname:      'deep-purple',
+  banksortcode:  'deep-purple',
 }
 const fieldColor = (field) => fieldColorMap[field?.toLowerCase()] ?? 'secondary'
 

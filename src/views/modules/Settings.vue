@@ -11,7 +11,7 @@
 
     <v-row>
       <v-col v-for="sub in visibleSubmodules" :key="sub.name" cols="12" md="4" lg="3">
-        <v-card elevation="1" @click="$router.push(sub.route)" style="cursor: pointer;">
+        <v-card elevation="1" @click="$router.push(sub.route)" style="cursor: pointer;" height="100%">
           <v-card-text class="text-center pa-6">
             <v-icon :icon="sub.icon" size="56" :color="sub.color" class="mb-3" />
             <div class="text-subtitle-1 font-weight-bold mb-1">{{ sub.title }}</div>

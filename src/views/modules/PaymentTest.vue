@@ -1,8 +1,8 @@
 <template>
   <MainLayout>
     <div class="mb-4">
-      <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="$router.push('/settings')">
-        Volver a Configuración
+      <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="$router.push('/tools')">
+        Volver a Herramientas
       </v-btn>
     </div>
 

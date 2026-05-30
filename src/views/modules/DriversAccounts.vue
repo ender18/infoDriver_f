@@ -255,7 +255,7 @@
                   variant="tonal"
                   color="warning"
                   :loading="item.process_status === 'processing'"
-                  :disabled="tools.accountsRefreshing || item.process_status === 'processing'"
+                  :disabled="tools.accountsRefreshing || item.process_status === 'processing' || item.process_status === 'done'"
                   @click="processSingle(item)"
                 >
                   Procesar
@@ -270,12 +270,13 @@
                     tools.accountsRefreshing ||
                     payingDrivers[item.driver_id] ||
                     item.payment_status === 'success' ||
+                    item.payment_status === 'pending' ||
                     !item.process_balance_before ||
                     item.process_balance_before <= 0
                   "
-                  @click="paySingle(item)"
+                  @click="openPayConfirm(item)"
                 >
-                  {{ item.payment_status === 'success' ? 'Pagado' : 'Pagar' }}
+                  {{ item.payment_status === 'success' ? 'Pagado' : item.payment_status === 'pending' ? 'En proceso' : 'Pagar' }}
                 </v-btn>
               </div>
             </template>
@@ -316,6 +317,99 @@
       </v-card>
     </v-dialog>
 
+    <!-- Diálogo de confirmación — pago individual -->
+    <v-dialog v-model="payConfirmDialog" max-width="480">
+      <v-card v-if="payConfirmItem">
+        <v-card-title class="text-h6 pa-4 d-flex align-center gap-2">
+          <v-icon color="deep-purple" size="22">mdi-bank-transfer-out</v-icon>
+          Confirmar transferencia SPEI
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-4">
+
+          <v-list density="compact" class="pa-0">
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="secondary" class="mr-3">mdi-tag-outline</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">Callsign / Driver ID</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium mt-1">
+                {{ payConfirmItem.callsign }} · #{{ payConfirmItem.driver_id }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="secondary" class="mr-3">mdi-account</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">Beneficiario</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium mt-1">
+                {{ `${payConfirmItem.forename} ${payConfirmItem.surname}`.toUpperCase() }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="secondary" class="mr-3">mdi-bank</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">Banco</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium mt-1">
+                {{ payConfirmItem.bank_name }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="secondary" class="mr-3">mdi-credit-card-outline</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">
+                Cuenta · <v-chip size="x-small" variant="tonal" :color="accountTypeColor(accountType(payConfirmItem.bank_sort_code))">{{ accountType(payConfirmItem.bank_sort_code) }}</v-chip>
+              </v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium mt-1 font-monospace">
+                {{ payConfirmItem.bank_sort_code }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="secondary" class="mr-3">mdi-office-building</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">Compañía</v-list-item-title>
+              <v-list-item-subtitle class="text-body-2 font-weight-medium mt-1">
+                {{ tools.accountsResult.company?.name }} · ID {{ selectedCompanyId }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+            <v-divider class="my-3" />
+
+            <v-list-item class="px-0 py-1">
+              <template #prepend>
+                <v-icon size="18" color="deep-purple" class="mr-3">mdi-currency-usd</v-icon>
+              </template>
+              <v-list-item-title class="text-caption text-medium-emphasis">Monto a transferir</v-list-item-title>
+              <v-list-item-subtitle class="text-h6 font-weight-bold text-deep-purple mt-1">
+                {{ formatMoney(payConfirmItem.process_balance_before) }}
+              </v-list-item-subtitle>
+            </v-list-item>
+
+          </v-list>
+
+          <v-alert type="warning" variant="tonal" density="compact" class="mt-4 text-body-2">
+            Esta transferencia es <strong>irreversible</strong>. Verifica los datos antes de confirmar.
+          </v-alert>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="payConfirmDialog = false">Cancelar</v-btn>
+          <v-btn color="deep-purple" variant="flat" prepend-icon="mdi-send" @click="confirmPay">
+            Confirmar pago
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snack.show" :color="snack.color" location="bottom right" timeout="6000">
       {{ snack.text }}
     </v-snackbar>
@@ -337,6 +431,8 @@ const loadingCompanies  = ref(false)
 const selectedCompanyId = ref(null)
 const search            = ref('')
 const confirmDialog     = ref(false)
+const payConfirmDialog  = ref(false)
+const payConfirmItem    = ref(null)
 const snack             = ref({ show: false, text: '', color: 'error' })
 const payingDrivers     = ref({})
 
@@ -464,6 +560,16 @@ const processSingle = async (item) => {
     const detail = err.response?.data?.detail
     showSnack(typeof detail === 'string' ? detail : 'Error al procesar el conductor')
   }
+}
+
+const openPayConfirm = (item) => {
+  payConfirmItem.value  = item
+  payConfirmDialog.value = true
+}
+
+const confirmPay = () => {
+  payConfirmDialog.value = false
+  paySingle(payConfirmItem.value)
 }
 
 const paySingle = async (item) => {

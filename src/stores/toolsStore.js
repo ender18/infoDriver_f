@@ -156,10 +156,11 @@ export const useToolsStore = defineStore('tools', () => {
   // ── Acción 4 — Proceso masivo: loop de llamadas individuales ─────────────
 
   async function processBulk(companyId) {
+    const pending = accountsResult.value.results.filter(r => r.process_status === null || r.process_status === 'error')
     accountsProcessing.value      = true
-    accountsProcessProgress.value = { done: 0, total: accountsResult.value.results.length, errors: 0 }
+    accountsProcessProgress.value = { done: 0, total: pending.length, errors: 0 }
 
-    for (const row of [...accountsResult.value.results]) {
+    for (const row of pending) {
       try {
         await processSingleDriver(companyId, row.driver_id)
       } catch {
