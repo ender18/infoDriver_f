@@ -6,7 +6,7 @@
       </v-btn>
     </div>
 
-    <div class="text-h5 font-weight-bold mb-2">Prueba de Transferencia SPEI</div>
+    <div class="text-h5 font-weight-bold mb-2">Transferencia SPEI</div>
     <v-divider class="mb-6" color="deep-purple" :thickness="2" style="max-width: 60px;" />
 
     <v-row>

@@ -53,11 +53,19 @@ const submodules = [
   },
   {
     name: 'payment-test',
-    title: 'Prueba de Pago',
+    title: 'Transferencia SPEI',
     description: 'Enviar una transferencia SPEI individual vía Peibo',
     icon: 'mdi-bank-transfer-out',
     color: 'deep-purple',
     route: '/payments/test',
+  },
+  {
+    name: 'peibo-transactions',
+    title: 'Transacciones PEIBO',
+    description: 'Historial de transferencias SPEI con estado de pago y eventos webhook',
+    icon: 'mdi-bank-check',
+    color: 'deep-purple',
+    route: '/payments/transactions',
   },
   {
     name: 'stats',

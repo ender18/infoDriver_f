@@ -2,11 +2,11 @@
 <template>
   <v-card flat class="mx-auto" max-width="420">
     <v-card-text class="pa-8">
-      <div class="text-h4 font-weight-bold text-center mb-2">
-        Bienvenido a <span class="text-primary">InfoDriver</span>
-      </div>
-      <div class="text-body-2 text-medium-emphasis text-center mb-10 mt-10">
-        Ingresa tus credenciales para continuar
+      <div class="text-center mb-8">
+        <img src="/icon_infodriver.png" alt="infoDriver" height="56" class="mb-4" />
+        <div class="text-h4 font-weight-bold">
+          <span style="color: #3ecfa0;">i</span><span style="color: #1a5c45;">nfoDriver</span>
+        </div>
       </div>
 
       <v-form ref="formRef" @submit.prevent="handleLogin">

@@ -97,6 +97,12 @@ export default [
     path: '/payments/test',
     name: 'payment-test',
     component: () => import('@/views/modules/PaymentTest.vue'),
-    meta: { requiresAuth: true, title: 'Prueba de Transferencia', requiredPermission: 'companies:update' }
+    meta: { requiresAuth: true, title: 'Transferencia SPEI', requiredPermission: 'companies:update' }
+  },
+  {
+    path: '/payments/transactions',
+    name: 'peibo-transactions',
+    component: () => import('@/views/modules/PeiboTransactions.vue'),
+    meta: { requiresAuth: true, title: 'Transacciones PEIBO', requiredPermission: 'tools:run' }
   }
 ]
