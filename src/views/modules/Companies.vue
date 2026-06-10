@@ -94,6 +94,11 @@
         <!-- Acciones -->
         <template #item.actions="{ item }">
           <div class="d-flex gap-1">
+            <v-btn v-if="auth.hasPermission('companies:update')" icon="mdi-tune" size="small" variant="text" color="primary"
+              @click="openValidationConfig(item)">
+              <v-icon>mdi-tune</v-icon>
+              <v-tooltip activator="parent" location="top">Reglas de validación</v-tooltip>
+            </v-btn>
             <v-btn v-if="auth.hasPermission('companies:update')" icon="mdi-pencil" size="small" variant="text" color="secondary"
               @click="openEdit(item)" />
             <v-btn v-if="auth.hasPermission('companies:delete')" icon="mdi-delete" size="small" variant="text" color="error"
@@ -267,6 +272,87 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog reglas de validación -->
+    <v-dialog v-model="validationDialog" max-width="560" persistent>
+      <v-card>
+        <v-card-title class="text-body-1 font-weight-bold pt-5 px-5">
+          Reglas de validación — {{ validationTarget?.name }}
+        </v-card-title>
+        <v-card-text class="px-5">
+          <div class="text-caption text-medium-emphasis mb-4">
+            Configura los valores permitidos para este empresa. Presiona Enter o coma para agregar cada valor.
+          </div>
+          <v-row dense>
+            <v-col cols="12">
+              <v-combobox
+                v-model="validationForm.allowed_towns"
+                label="Ciudades permitidas (town)"
+                variant="outlined"
+                density="compact"
+                multiple
+                chips
+                closable-chips
+                hide-details="auto"
+                hint="Ej: Mexico City, Xalapa, Veracruz"
+                persistent-hint
+                class="mb-2"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-combobox
+                v-model="validationForm.allowed_regions"
+                label="Regiones permitidas (region)"
+                variant="outlined"
+                density="compact"
+                multiple
+                chips
+                closable-chips
+                hide-details="auto"
+                hint="Ej: CDMX, EDOMEX, Veracruz"
+                persistent-hint
+                class="mb-2"
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model.number="validationForm.phone_digits"
+                label="Dígitos de teléfono"
+                variant="outlined"
+                density="compact"
+                type="number"
+                :rules="[v => v > 0 || 'Debe ser mayor a 0']"
+                hide-details="auto"
+                hint="México: 10"
+                persistent-hint
+              />
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-combobox
+                v-model="validationForm.bank_sort_code_lengths"
+                label="Longitudes de cuenta bancaria"
+                variant="outlined"
+                density="compact"
+                multiple
+                chips
+                closable-chips
+                hide-details="auto"
+                hint="CLABE: 18, TDD: 16"
+                persistent-hint
+                :items="[16, 18]"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions class="px-5 pb-4">
+          <v-spacer />
+          <v-btn variant="text" @click="validationDialog = false">Cancelar</v-btn>
+          <v-btn color="primary" variant="tonal" :loading="savingValidation" @click="saveValidationConfig">
+            Guardar reglas
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snack.show" :color="snack.color" location="bottom right" timeout="3000">
       {{ snack.text }}
     </v-snackbar>
@@ -300,6 +386,17 @@ const form = ref(emptyForm())
 const deleteDialog = ref(false)
 const deleteTarget = ref(null)
 const deleting = ref(false)
+
+const validationDialog = ref(false)
+const validationTarget = ref(null)
+const savingValidation = ref(false)
+const defaultValidationForm = () => ({
+  allowed_towns: ['Mexico City', 'Xalapa', 'EDOMEX', 'Veracruz'],
+  allowed_regions: ['CDMX', 'EDOMEX', 'Veracruz'],
+  phone_digits: 10,
+  bank_sort_code_lengths: [16, 18],
+})
+const validationForm = ref(defaultValidationForm())
 
 const snack = ref({ show: false, text: '', color: 'success' })
 
@@ -447,6 +544,41 @@ const doDelete = async () => {
     showSnack('Error al desactivar compañía', 'error')
   } finally {
     deleting.value = false
+  }
+}
+
+const openValidationConfig = async (company) => {
+  validationTarget.value = company
+  validationForm.value = defaultValidationForm()
+  try {
+    const { data } = await apiClient.get(`/companies/${company.id}/validation-config`)
+    validationForm.value = {
+      allowed_towns:          data.allowed_towns          ?? defaultValidationForm().allowed_towns,
+      allowed_regions:        data.allowed_regions        ?? defaultValidationForm().allowed_regions,
+      phone_digits:           data.phone_digits           ?? defaultValidationForm().phone_digits,
+      bank_sort_code_lengths: data.bank_sort_code_lengths ?? defaultValidationForm().bank_sort_code_lengths,
+    }
+  } catch {
+    // sin config previa — se usan los defaults
+  }
+  validationDialog.value = true
+}
+
+const saveValidationConfig = async () => {
+  savingValidation.value = true
+  try {
+    await apiClient.put(`/companies/${validationTarget.value.id}/validation-config`, {
+      allowed_towns:          validationForm.value.allowed_towns,
+      allowed_regions:        validationForm.value.allowed_regions,
+      phone_digits:           Number(validationForm.value.phone_digits),
+      bank_sort_code_lengths: validationForm.value.bank_sort_code_lengths.map(Number),
+    })
+    validationDialog.value = false
+    showSnack('Reglas de validación actualizadas')
+  } catch {
+    showSnack('Error al guardar reglas', 'error')
+  } finally {
+    savingValidation.value = false
   }
 }
 

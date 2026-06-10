@@ -27,9 +27,17 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Interceptor de respuesta — 401 expulsión, 403 notificación
+// Interceptor de respuesta — sliding window JWT, 401 expulsión, 403 notificación
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const newToken = response.headers['x-new-token']
+    if (newToken) {
+      const auth = useAuthStore()
+      auth.token = newToken
+      localStorage.setItem('token', newToken)
+    }
+    return response
+  },
   (error) => {
     const status = error.response?.status
     if (status === 401) {

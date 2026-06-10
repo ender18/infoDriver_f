@@ -100,6 +100,12 @@ export default [
     meta: { requiresAuth: true, title: 'Transferencia SPEI', requiredPermission: 'companies:update' }
   },
   {
+    path: '/tools/referrals',
+    name: 'referrals',
+    component: () => import('@/views/modules/Referidos.vue'),
+    meta: { requiresAuth: true, title: 'Referidos', requiredPermission: 'tools:run' }
+  },
+  {
     path: '/payments/transactions',
     name: 'peibo-transactions',
     component: () => import('@/views/modules/PeiboTransactions.vue'),

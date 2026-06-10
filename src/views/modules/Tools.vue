@@ -83,5 +83,13 @@ const submodules = [
     color: 'secondary',
     route: '/tools/stats-drivers',
   },
+  {
+    name: 'referrals',
+    title: 'Referidos',
+    description: 'Consulta qué conductores han referido a otros y cuántos referidos tienen',
+    icon: 'mdi-account-arrow-right',
+    color: 'teal',
+    route: '/tools/referrals',
+  },
 ]
 </script>

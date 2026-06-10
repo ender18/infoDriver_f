@@ -192,7 +192,7 @@ const headers = [
   { title: 'Nombre',    key: 'full_name' },
   { title: 'Campo',     key: 'field' },
   { title: 'Valor',     key: 'value',   sortable: false },
-  { title: 'Error',     key: 'error',   sortable: false },
+  { title: 'Error',     key: 'error' },
   { title: 'Referidor', key: 'postcode', sortable: false },
 ]
 
