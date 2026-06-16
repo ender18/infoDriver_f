@@ -80,6 +80,15 @@
           </span>
         </template>
 
+        <template #item.callsign="{ item }">
+          <code v-if="item.callsign" class="text-caption">{{ item.callsign }}</code>
+          <span v-else class="text-medium-emphasis">—</span>
+        </template>
+
+        <template #item.beneficiary_name="{ item }">
+          <span class="text-body-2">{{ item.beneficiary_name ?? '—' }}</span>
+        </template>
+
         <template #item.status="{ item }">
           <v-chip :color="txStatusColor(item.status)" size="x-small" variant="tonal">
             {{ txStatusLabel(item.status) }}
@@ -165,6 +174,12 @@
               </span>
             </template>
           </v-list-item>
+          <v-list-item v-if="selectedTx.callsign" title="Callsign">
+            <template #subtitle>
+              <code class="text-caption">{{ selectedTx.callsign }}</code>
+            </template>
+          </v-list-item>
+          <v-list-item v-if="selectedTx.beneficiary_name" title="Beneficiario" :subtitle="selectedTx.beneficiary_name" />
           <v-list-item title="Estado">
             <template #subtitle>
               <v-chip :color="txStatusColor(selectedTx.status)" size="x-small" variant="tonal" class="mt-1">
@@ -173,6 +188,7 @@
             </template>
           </v-list-item>
           <v-list-item title="Monto" :subtitle="formatMoney(selectedTx.amount)" />
+          <v-list-item v-if="selectedTx.original_amount != null" title="Monto original" :subtitle="formatMoney(selectedTx.original_amount)" />
           <v-list-item title="Tipo de origen" :subtitle="sourceTypeLabel(selectedTx.source_type)" />
           <v-list-item v-if="selectedTx.source_id" title="Source ID" :subtitle="String(selectedTx.source_id)" />
           <v-list-item title="Creado" :subtitle="formatDate(selectedTx.created_at)" />
@@ -312,19 +328,21 @@ const statusOptions = [
 
 const sourceTypeOptions = [
   { title: 'Pago conductor', value: 'driver_payment' },
+  { title: 'Cola de pagos',  value: 'payment_queue'  },
   { title: 'Manual',         value: 'manual'         },
 ]
 
 const headers = [
-  { title: 'Tracking',   key: 'tracking_code', sortable: false },
-  { title: 'Estado',     key: 'status',        align: 'center', sortable: false },
-  { title: 'Monto',      key: 'amount',        align: 'end',    sortable: false },
-  { title: 'Origen',     key: 'source_type',   align: 'center', sortable: false },
-  { title: 'Source ID',  key: 'source_id',     align: 'center', sortable: false },
-  { title: 'Webhooks',   key: 'webhook_count', align: 'center', sortable: false },
-  { title: 'Pagado',     key: 'paid_at',       sortable: false },
-  { title: 'Creado',     key: 'created_at',    sortable: false },
-  { title: '',           key: 'actions',       align: 'center', sortable: false },
+  { title: 'Tracking',     key: 'tracking_code',  sortable: false },
+  { title: 'Callsign',     key: 'callsign',        sortable: false },
+  { title: 'Beneficiario', key: 'beneficiary_name', sortable: false },
+  { title: 'Estado',       key: 'status',          align: 'center', sortable: false },
+  { title: 'Monto',        key: 'amount',          align: 'end',    sortable: false },
+  { title: 'Origen',       key: 'source_type',     align: 'center', sortable: false },
+  { title: 'Webhooks',     key: 'webhook_count',   align: 'center', sortable: false },
+  { title: 'Pagado',       key: 'paid_at',         sortable: false },
+  { title: 'Creado',       key: 'created_at',      sortable: false },
+  { title: '',             key: 'actions',         align: 'center', sortable: false },
 ]
 
 const activeCompanies = computed(() => companies.value.filter(c => c.is_active))
@@ -349,7 +367,7 @@ const txStatusLabel = (s) =>
   ({ success: 'Liquidada', pending: 'Pendiente', failed: 'Fallida', refunded: 'Devuelta' }[s] ?? s ?? '—')
 
 const sourceTypeLabel = (s) =>
-  ({ driver_payment: 'Conductor', manual: 'Manual' }[s] ?? s ?? '—')
+  ({ driver_payment: 'Conductor', payment_queue: 'Cola de pagos', manual: 'Manual' }[s] ?? s ?? '—')
 
 const webhookStatusColor = (s) => {
   if (!s) return 'secondary'

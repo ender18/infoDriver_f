@@ -106,6 +106,18 @@ export default [
     meta: { requiresAuth: true, title: 'Referidos', requiredPermission: 'tools:run' }
   },
   {
+    path: '/tools/bonuses',
+    name: 'bonuses',
+    component: () => import('@/views/modules/Bonuses.vue'),
+    meta: { requiresAuth: true, title: 'Bonos Conductores', requiredPermission: 'stats:read' }
+  },
+  {
+    path: '/payment-queue',
+    name: 'payment-queue',
+    component: () => import('@/views/modules/PaymentQueue.vue'),
+    meta: { requiresAuth: true, title: 'Cola de Pagos', requiredPermission: 'tools:run' }
+  },
+  {
     path: '/payments/transactions',
     name: 'peibo-transactions',
     component: () => import('@/views/modules/PeiboTransactions.vue'),

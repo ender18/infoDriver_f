@@ -49,6 +49,17 @@
           </v-btn>
 
           <v-btn
+            v-if="auth.hasPermission('companies:update') && tools.accountsResult.company"
+            color="deep-purple"
+            prepend-icon="mdi-tray-arrow-up"
+            :disabled="!selectedCompanyId || enqueuingBulk || tools.accountsRefreshing || enqueuableCount === 0"
+            :loading="enqueuingBulk"
+            @click="enqueueConfirmDialog = true"
+          >
+            Encolar todos ({{ enqueuableCount }})
+          </v-btn>
+
+          <v-btn
             v-if="tools.accountsResult.company"
             variant="text"
             prepend-icon="mdi-close"
@@ -265,6 +276,7 @@
                   size="x-small"
                   variant="tonal"
                   color="deep-purple"
+                  prepend-icon="mdi-tray-arrow-up"
                   :loading="payingDrivers[item.driver_id]"
                   :disabled="
                     tools.accountsRefreshing ||
@@ -276,7 +288,7 @@
                   "
                   @click="openPayConfirm(item)"
                 >
-                  {{ item.payment_status === 'success' ? 'Pagado' : item.payment_status === 'pending' ? 'En proceso' : 'Pagar' }}
+                  {{ item.payment_status === 'success' ? 'Pagado' : item.payment_status === 'pending' ? 'En cola' : 'Encolar pago' }}
                 </v-btn>
               </div>
             </template>
@@ -321,8 +333,8 @@
     <v-dialog v-model="payConfirmDialog" max-width="480">
       <v-card v-if="payConfirmItem">
         <v-card-title class="text-h6 pa-4 d-flex align-center gap-2">
-          <v-icon color="deep-purple" size="22">mdi-bank-transfer-out</v-icon>
-          Confirmar transferencia SPEI
+          <v-icon color="deep-purple" size="22">mdi-tray-arrow-up</v-icon>
+          Encolar pago para aprobación
         </v-card-title>
         <v-divider />
         <v-card-text class="pa-4">
@@ -395,16 +407,59 @@
 
           </v-list>
 
-          <v-alert type="warning" variant="tonal" density="compact" class="mt-4 text-body-2">
-            Esta transferencia es <strong>irreversible</strong>. Verifica los datos antes de confirmar.
+          <v-divider class="my-3" />
+
+          <v-text-field
+            v-model="payConfirmAmount"
+            type="number"
+            label="Monto a encolar"
+            variant="outlined"
+            density="compact"
+            prefix="$"
+            suffix="MXN"
+            :min="0.01"
+            hint="Puedes ajustar el monto antes de enviarlo a la cola"
+            persistent-hint
+          />
+
+          <v-alert type="info" variant="tonal" density="compact" class="mt-4 text-body-2">
+            El pago quedará <strong>pendiente de aprobación</strong> por la contadora antes de ejecutarse.
           </v-alert>
         </v-card-text>
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn variant="text" @click="payConfirmDialog = false">Cancelar</v-btn>
-          <v-btn color="deep-purple" variant="flat" prepend-icon="mdi-send" @click="confirmPay">
-            Confirmar pago
+          <v-btn color="deep-purple" variant="flat" prepend-icon="mdi-tray-arrow-up" @click="confirmPay">
+            Encolar pago
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Diálogo de confirmación — encolar todos -->
+    <v-dialog v-model="enqueueConfirmDialog" max-width="460">
+      <v-card>
+        <v-card-title class="text-h6 pa-4 d-flex align-center gap-2">
+          <v-icon color="deep-purple" size="22">mdi-tray-arrow-up</v-icon>
+          Encolar todos los pagos
+        </v-card-title>
+        <v-divider />
+        <v-card-text class="pa-4">
+          ¿Encolar <strong>{{ enqueuableCount }}</strong>
+          pago{{ enqueuableCount !== 1 ? 's' : '' }} de
+          <strong>{{ tools.accountsResult.company?.name }}</strong>?
+          <br /><br />
+          <v-alert type="info" variant="tonal" density="compact">
+            Los pagos quedarán en la cola de aprobación. La contadora deberá aprobarlos antes de que se ejecuten.
+          </v-alert>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" @click="enqueueConfirmDialog = false">Cancelar</v-btn>
+          <v-btn color="deep-purple" variant="flat" prepend-icon="mdi-tray-arrow-up" @click="enqueueBulk">
+            Encolar {{ enqueuableCount }} pagos
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -430,9 +485,12 @@ const companies         = ref([])
 const loadingCompanies  = ref(false)
 const selectedCompanyId = ref(null)
 const search            = ref('')
-const confirmDialog     = ref(false)
-const payConfirmDialog  = ref(false)
-const payConfirmItem    = ref(null)
+const confirmDialog       = ref(false)
+const payConfirmDialog    = ref(false)
+const payConfirmItem      = ref(null)
+const payConfirmAmount    = ref('')
+const enqueueConfirmDialog = ref(false)
+const enqueuingBulk       = ref(false)
 const snack             = ref({ show: false, text: '', color: 'error' })
 const payingDrivers     = ref({})
 
@@ -456,6 +514,13 @@ const activeCompanies = computed(() => companies.value.filter(c => c.is_active))
 
 const pendingCount = computed(() =>
   tools.accountsResult.results.filter(r => r.process_status === null).length
+)
+const enqueuableCount = computed(() =>
+  tools.accountsResult.results.filter(r =>
+    r.process_balance_before > 0 &&
+    r.payment_status !== 'success' &&
+    r.payment_status !== 'pending'
+  ).length
 )
 const processedCount = computed(() =>
   tools.accountsResult.results.filter(r => r.process_status === 'done').length
@@ -563,34 +628,66 @@ const processSingle = async (item) => {
 }
 
 const openPayConfirm = (item) => {
-  payConfirmItem.value  = item
+  payConfirmItem.value   = item
+  payConfirmAmount.value = String(item.process_balance_before ?? '')
   payConfirmDialog.value = true
 }
 
 const confirmPay = () => {
   payConfirmDialog.value = false
-  paySingle(payConfirmItem.value)
+  const amount = parseFloat(payConfirmAmount.value)
+  paySingle(payConfirmItem.value, isNaN(amount) || amount <= 0 ? null : amount)
 }
 
-const paySingle = async (item) => {
+const paySingle = async (item, amount = null) => {
   payingDrivers.value[item.driver_id] = true
   try {
-    const { data } = await apiClient.post(
+    const body = amount != null ? { amount } : null
+    await apiClient.post(
       `/payments/transfer/driver/${item.driver_id}`,
-      null,
+      body,
       { params: { company_id: selectedCompanyId.value } },
     )
     const row = tools.accountsResult.results.find(r => r.driver_id === item.driver_id)
-    if (row) {
-      row.payment_status      = 'pending'
-      row.peibo_tracking_code = data.tracking_code
-    }
-    showSnack(`Pago enviado · ${data.tracking_code}`, 'success')
+    if (row) row.payment_status = 'pending'
+    showSnack('Pago encolado correctamente — pendiente de aprobación', 'success')
   } catch (err) {
     const detail = err.response?.data?.detail
-    showSnack(typeof detail === 'string' ? detail : 'Error al enviar el pago', 'error')
+    showSnack(typeof detail === 'string' ? detail : 'Error al encolar el pago', 'error')
   } finally {
     delete payingDrivers.value[item.driver_id]
+  }
+}
+
+const enqueueBulk = async () => {
+  enqueueConfirmDialog.value = false
+  enqueuingBulk.value = true
+  const eligible = tools.accountsResult.results.filter(r =>
+    r.process_balance_before > 0 &&
+    r.payment_status !== 'success' &&
+    r.payment_status !== 'pending'
+  )
+  let success = 0
+  let errors = 0
+  await Promise.allSettled(eligible.map(async (item) => {
+    try {
+      await apiClient.post(
+        `/payments/transfer/driver/${item.driver_id}`,
+        null,
+        { params: { company_id: selectedCompanyId.value } },
+      )
+      const row = tools.accountsResult.results.find(r => r.driver_id === item.driver_id)
+      if (row) row.payment_status = 'pending'
+      success++
+    } catch {
+      errors++
+    }
+  }))
+  enqueuingBulk.value = false
+  if (errors === 0) {
+    showSnack(`${success} pago${success !== 1 ? 's' : ''} encolado${success !== 1 ? 's' : ''} correctamente — pendientes de aprobación`, 'success')
+  } else {
+    showSnack(`${success} encolado${success !== 1 ? 's' : ''}, ${errors} error${errors !== 1 ? 'es' : ''}`, 'warning')
   }
 }
 

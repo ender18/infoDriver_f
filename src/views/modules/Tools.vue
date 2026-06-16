@@ -91,5 +91,21 @@ const submodules = [
     color: 'teal',
     route: '/tools/referrals',
   },
+  {
+    name: 'bonuses',
+    title: 'Bonos Conductores',
+    description: 'Consulta bonos diarios y de primer viaje por compañía y rango de fechas',
+    icon: 'mdi-trophy',
+    color: 'amber',
+    route: '/tools/bonuses',
+  },
+  {
+    name: 'payment-queue',
+    title: 'Cola de Pagos',
+    description: 'Aprobación y gestión de pagos pendientes por la contadora',
+    icon: 'mdi-cash-clock',
+    color: 'deep-purple',
+    route: '/payment-queue',
+  },
 ]
 </script>
